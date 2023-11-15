@@ -21,7 +21,7 @@ export class Env {
   DB_PORT = Number(_process.env.DB_PORT) ?? 5432;
 
   // jwt
-  JWT_SECRET = _process.env.JWT_SECRET;
+  JWT_SECRET = _process.env.JWT_SECRET as string;
   JWT_RT_SECRET = _process.env.JWT_RT_SECRET;
 
   // mailer
@@ -41,6 +41,11 @@ export class Env {
   // Redis
   REDIS_HOST = _process.env.REDIS_HOST;
   REDIS_PORT = Number(_process.env.REDIS_PORT) ?? 4369;
+
+  STOGARE_BUCKET = _process.env.STOGARE_BUCKET;
+
+  SENDER_ID = _process.env.SENDER_ID;
+  SERVER_KEY = _process.env.SERVER_KEY;
 }
 
 export const envConfig = new Env();

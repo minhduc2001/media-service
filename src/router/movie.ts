@@ -1,9 +1,28 @@
 import { Router } from "express";
 import upload from "../middlewares/multer";
 import { AppController } from "../controllers/app.controller";
+import auth from "../middlewares/auth";
 
 const appController = new AppController();
 const router: Router = Router();
-router.post("/upload-movie", upload.single("movie"), appController.uploadMovie);
+
+router.get(
+  "/:folder/:name",
+  //   auth.verifyToken,
+  appController.streamFile
+);
+
+router.get(
+  "/:folder/:name/:subname",
+  //   auth.verifyToken,
+  appController.streamFile
+);
+
+router.post(
+  "/upload",
+  auth.verifyTokenAndAdmin,
+  upload.single("movie"),
+  appController.uploadMovie
+);
 
 export default router;
