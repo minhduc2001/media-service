@@ -8,6 +8,12 @@ const router: Router = Router();
 
 router.get("/:folder/:name", auth.verifyToken, appController.streamFile);
 
+router.get(
+  "/:folder/:name/:subname",
+  auth.verifyToken,
+  appController.streamFile
+);
+
 router.post(
   "/upload",
   auth.verifyTokenAndAdmin,

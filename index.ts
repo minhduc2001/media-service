@@ -7,7 +7,6 @@ import { envConfig } from "./src/configs/env.config";
 import exceptionFilter from "./src/middlewares/exception.filter";
 import router from "./src/router/router";
 import "./src/utils/response";
-import * as path from "path";
 const app: Express = express();
 const port = envConfig.PORT || 3000;
 
@@ -16,7 +15,7 @@ app.use(
     origin: "http://localhost:5173",
   })
 );
-app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+// app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 app.use(helmet());
 app.use(bodyParser.json({ limit: "50mb" }));
 app.use(bodyParser.urlencoded({ limit: "50mb", extended: false }));

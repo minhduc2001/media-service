@@ -19,6 +19,5 @@
     "types": [
       "bun-types" // add Bun global
     ]
-  },
-  "include": ["firebase-key.json"]
+  }
 }

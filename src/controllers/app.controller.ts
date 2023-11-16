@@ -4,14 +4,32 @@ import { removeFile } from "../services/file";
 import { encodeHLSWithMultipleVideoStreams } from "../services/convert";
 import * as path from "path";
 import Business from "../middlewares/exceptions/business";
+import fetcher from "../utils/fetcher";
+import { envConfig } from "../configs/env.config";
+import { CustomRequest } from "../middlewares/auth";
+import { IResponse } from "../interfaces";
 
 export class AppController {
-  async uploadMovie(req: Request, res: Response, next: NextFunction) {
+  async uploadMovie(req: CustomRequest, res: Response, next: NextFunction) {
     const filename = req.file?.filename;
     try {
-      // if (filename) await encodeHLSWithMultipleVideoStreams(filename);
+      if (filename) await encodeHLSWithMultipleVideoStreams(filename);
 
-      res.customSuccess(200, {});
+      const data = await fetcher.PATCH<IResponse>(
+        "/movie/update-url",
+        { filename: filename },
+        {
+          baseURL: envConfig.BASE_URL_MAIN_SERVER,
+          timeout: 15000,
+          headers: { Authorization: `Bearer ${req.token}` },
+        }
+      );
+
+      if (!data.success) {
+        throw new BadRequest({ message: data.message });
+      }
+
+      res.customSuccess(200, null, "Tải lên thành công");
     } catch (e: any) {
       removeFile(filename as string);
       return next(new BadRequest({ message: e.message }));

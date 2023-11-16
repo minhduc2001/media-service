@@ -9,6 +9,7 @@ process.env = {};
 export class Env {
   NODE_ENV = "development";
   PORT = _process.env.PORT ?? 8080;
+  BASE_URL_MAIN_SERVER = _process.env.BASE_URL_MAIN_SERVER;
 
   IP = ip.address();
   API_VERSION = "1";

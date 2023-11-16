@@ -6,15 +6,11 @@ import auth from "../middlewares/auth";
 const appController = new AppController();
 const router: Router = Router();
 
-router.get(
-  "/:folder/:name",
-  //   auth.verifyToken,
-  appController.streamFile
-);
+router.get("/:folder/:name", auth.verifyToken, appController.streamFile);
 
 router.get(
   "/:folder/:name/:subname",
-  //   auth.verifyToken,
+  auth.verifyToken,
   appController.streamFile
 );
 
