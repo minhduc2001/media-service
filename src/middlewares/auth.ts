@@ -66,17 +66,23 @@ class VerifyJWTToken {
     res: Response,
     next: NextFunction
   ) {
-    await this.verifyToken(req, res, () => {
-      if (req.user.id && req.user.role == "admin") {
-        return next();
-      } else {
-        return next(
-          new Authorization({
-            message: "Bạn không có quyền truy cập nội dung này!",
-          })
-        );
-      }
-    });
+    try {
+      const auth = new VerifyJWTToken();
+
+      await auth.verifyToken(req, res, () => {
+        if (req.user.id && req.user.role == "admin") {
+          return next();
+        } else {
+          return next(
+            new Authorization({
+              message: "Bạn không có quyền truy cập nội dung này!",
+            })
+          );
+        }
+      });
+    } catch (error) {
+      return next(error);
+    }
   }
 }
 
