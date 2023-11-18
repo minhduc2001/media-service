@@ -15,7 +15,7 @@ router.get(
 );
 
 router.post(
-  "/upload",
+  "/upload/:id",
   auth.verifyTokenAndAdmin,
   upload.single("movie"),
   appController.uploadMovie

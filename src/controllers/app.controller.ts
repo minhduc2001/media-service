@@ -12,11 +12,13 @@ import { IResponse } from "../interfaces";
 export class AppController {
   async uploadMovie(req: CustomRequest, res: Response, next: NextFunction) {
     const filename = req.file?.filename;
+    const id = req.params.id;
+
     try {
       if (filename) await encodeHLSWithMultipleVideoStreams(filename);
 
       const data = await fetcher.PATCH<IResponse>(
-        "/movie/update-url",
+        `/movie/${id}/url`,
         { filename: filename },
         {
           baseURL: envConfig.BASE_URL_MAIN_SERVER,
