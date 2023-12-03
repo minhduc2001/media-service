@@ -4,7 +4,7 @@ const Schema = mongoose.Schema;
 const Music = new Schema({
   musicId: { type: Number },
   url: { type: String },
-  isUpdate: { type: Boolean },
+  isUpdate: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });

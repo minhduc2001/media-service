@@ -10,10 +10,11 @@ import { CustomRequest } from "../middlewares/auth";
 import { IResponse } from "../interfaces";
 import Movie from "../models/Movie";
 import Music from "../models/Music";
+import { encodeAudioHLSWithMultipleStreams } from "../services/convert-audio";
 
 export class AppController {
   async uploadMovie(req: CustomRequest, res: Response, next: NextFunction) {
-    const filename = req.file?.filename;
+    let filename = req.file?.filename as string;
     const id = req.params.id;
 
     try {
@@ -23,6 +24,7 @@ export class AppController {
 
       let check = false;
       if (filename) check = await encodeHLSWithMultipleVideoStreams(filename);
+      filename = filename?.split(".")[0];
 
       if (!check) throw new Business({ message: "Không convert được file!" });
       movie.url = filename;
@@ -30,7 +32,7 @@ export class AppController {
 
       const data = await fetcher.PATCH<IResponse>(
         `/movie/${id}/url`,
-        { filename: filename },
+        { url: filename },
         {
           baseURL: envConfig.BASE_URL_MAIN_SERVER,
           timeout: 15000,
@@ -74,7 +76,7 @@ export class AppController {
   }
 
   async uploadMusic(req: CustomRequest, res: Response, next: NextFunction) {
-    const filename = req.file?.filename;
+    let filename = req.file?.filename as string;
     const id = req.params.id;
 
     try {
@@ -83,7 +85,8 @@ export class AppController {
       await music.save();
 
       let check = false;
-      if (filename) check = await encodeHLSWithMultipleVideoStreams(filename);
+      if (filename) check = await encodeAudioHLSWithMultipleStreams(filename);
+      filename = filename?.split(".")[0];
 
       if (!check) throw new Business({ message: "Không convert được file!" });
       music.url = filename;
@@ -91,7 +94,7 @@ export class AppController {
 
       const data = await fetcher.PATCH<IResponse>(
         `/music/${id}/url`,
-        { filename: filename },
+        { url: filename },
         {
           baseURL: envConfig.BASE_URL_MAIN_SERVER,
           timeout: 15000,

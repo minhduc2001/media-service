@@ -1,5 +1,9 @@
 import * as path from "path";
 
+const MAXIMUM_BITRATE_128K = 128 * 10 ** 3; // 128 Kbps
+const MAXIMUM_BITRATE_256K = 256 * 10 ** 3; // 256 Kbps
+const MAXIMUM_BITRATE_320K = 320 * 10 ** 3; // 320 Kbps
+
 type EncodeAudioByBitrate = {
   inputPath: string;
   outputSegmentPath: string;
@@ -50,6 +54,8 @@ const encodeAudioLow = async ({
     `${bitrate.low}`,
     "-var_stream_map",
     "a:0",
+    "-master_pl_name",
+    "master.m3u8",
     "-f",
     "hls",
     "-hls_time",
@@ -84,6 +90,8 @@ const encodeAudioMedium = async ({
     `${bitrate.medium}`,
     "-var_stream_map",
     "a:0",
+    "-master_pl_name",
+    "master.m3u8",
     "-f",
     "hls",
     "-hls_time",
@@ -118,6 +126,8 @@ const encodeAudioHigh = async ({
     `${bitrate.high}`,
     "-var_stream_map",
     "a:0",
+    "-master_pl_name",
+    "master.m3u8",
     "-f",
     "hls",
     "-hls_time",
@@ -152,6 +162,8 @@ const encodeAudioOriginal = async ({
     `${bitrate.original}`,
     "-var_stream_map",
     "a:0",
+    "-master_pl_name",
+    "master.m3u8",
     "-f",
     "hls",
     "-hls_time",
@@ -167,26 +179,81 @@ const encodeAudioOriginal = async ({
   return true;
 };
 
-export const encodeAudioHLSWithMultipleStreams = async (inputPath: string) => {
+export const encodeAudioHLSWithMultipleStreams = async (filename: string) => {
+  const inputPath = path.join(process.cwd(), "uploads", filename);
   const [bitrate] = await Promise.all([getBitrate(inputPath)]);
-  const parent_folder = path.join(inputPath, "..");
-  const outputSegmentPath = path.join(parent_folder, "a%v/fileSequence%d.ts");
-  const outputPath = path.join(parent_folder, "a%v/prog_index.m3u8");
-  const bitrateLow = Math.min(bitrate, 128 * 1000); // 128 kbps
-  const bitrateMedium = Math.min(bitrate, 192 * 1000); // 192 kbps
-  const bitrateHigh = Math.min(bitrate, 256 * 1000); // 256 kbps
 
-  await encodeAudioMedium({
+  const prefix_folder = inputPath.split("/").at(-1)?.split(".").at(0) || "";
+  const parent_folder = path.join(inputPath, "..");
+  const outputSegmentPath = path.join(
+    parent_folder,
+    prefix_folder,
+    "a%v/fileSequence%d.ts"
+  );
+  const outputPath = path.join(
+    parent_folder,
+    prefix_folder,
+    "a%v/prog_index.m3u8"
+  );
+
+  const bitrate128 =
+    bitrate > MAXIMUM_BITRATE_128K ? MAXIMUM_BITRATE_128K : bitrate;
+  const bitrate256 =
+    bitrate > MAXIMUM_BITRATE_256K ? MAXIMUM_BITRATE_256K : bitrate;
+  const bitrate320 =
+    bitrate > MAXIMUM_BITRATE_320K ? MAXIMUM_BITRATE_320K : bitrate;
+
+  await encodeAudioLow({
     bitrate: {
-      low: bitrateLow,
-      medium: bitrateMedium,
-      high: bitrateHigh,
+      low: bitrate128,
+      medium: bitrate256,
+      high: bitrate320,
       original: bitrate,
     },
     inputPath,
     outputPath,
     outputSegmentPath,
   });
+
+  if (bitrate > bitrate128) {
+    await encodeAudioMedium({
+      bitrate: {
+        low: bitrate128,
+        medium: bitrate256,
+        high: bitrate320,
+        original: bitrate,
+      },
+      inputPath,
+      outputPath,
+      outputSegmentPath,
+    });
+  }
+
+  if (bitrate > bitrate256) {
+    await encodeAudioHigh({
+      bitrate: {
+        low: bitrate128,
+        medium: bitrate256,
+        high: bitrate320,
+        original: bitrate,
+      },
+      inputPath,
+      outputPath,
+      outputSegmentPath,
+    });
+  } else {
+    await encodeAudioOriginal({
+      bitrate: {
+        low: bitrate128,
+        medium: bitrate256,
+        high: bitrate320,
+        original: bitrate,
+      },
+      inputPath,
+      outputPath,
+      outputSegmentPath,
+    });
+  }
 
   return true;
 };
