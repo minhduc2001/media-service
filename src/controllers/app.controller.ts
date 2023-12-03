@@ -8,6 +8,8 @@ import fetcher from "../utils/fetcher";
 import { envConfig } from "../configs/env.config";
 import { CustomRequest } from "../middlewares/auth";
 import { IResponse } from "../interfaces";
+import Movie from "../models/Movie";
+import Music from "../models/Music";
 
 export class AppController {
   async uploadMovie(req: CustomRequest, res: Response, next: NextFunction) {
@@ -15,7 +17,16 @@ export class AppController {
     const id = req.params.id;
 
     try {
-      if (filename) await encodeHLSWithMultipleVideoStreams(filename);
+      const movie = new Movie();
+      movie.movieId = Number(id);
+      await movie.save();
+
+      let check = false;
+      if (filename) check = await encodeHLSWithMultipleVideoStreams(filename);
+
+      if (!check) throw new Business({ message: "Không convert được file!" });
+      movie.url = filename;
+      await movie.save();
 
       const data = await fetcher.PATCH<IResponse>(
         `/movie/${id}/url`,
@@ -23,13 +34,16 @@ export class AppController {
         {
           baseURL: envConfig.BASE_URL_MAIN_SERVER,
           timeout: 15000,
-          headers: { Authorization: `Bearer ${req.token}` },
+          headers: { Authorization: `${req.token}` },
         }
       );
 
       if (!data.success) {
         throw new BadRequest({ message: data.message });
       }
+
+      movie.isUpdate = true;
+      await movie.save();
 
       res.customSuccess(200, null, "Tải lên thành công");
     } catch (e: any) {
@@ -59,12 +73,42 @@ export class AppController {
     }
   }
 
-  async uploadMusic(req: Request, res: Response, next: NextFunction) {
+  async uploadMusic(req: CustomRequest, res: Response, next: NextFunction) {
     const filename = req.file?.filename;
+    const id = req.params.id;
+
     try {
-      res.customSuccess(200, {});
+      const music = new Music();
+      music.musicId = Number(id);
+      await music.save();
+
+      let check = false;
+      if (filename) check = await encodeHLSWithMultipleVideoStreams(filename);
+
+      if (!check) throw new Business({ message: "Không convert được file!" });
+      music.url = filename;
+      await music.save();
+
+      const data = await fetcher.PATCH<IResponse>(
+        `/music/${id}/url`,
+        { filename: filename },
+        {
+          baseURL: envConfig.BASE_URL_MAIN_SERVER,
+          timeout: 15000,
+          headers: { Authorization: `${req.token}` },
+        }
+      );
+
+      if (!data.success) {
+        throw new BadRequest({ message: data.message });
+      }
+
+      music.isUpdate = true;
+      await music.save();
+
+      res.customSuccess(200, null, "Tải lên thành công");
     } catch (e: any) {
-      if (filename) removeFile(filename);
+      removeFile(filename as string);
       return next(new BadRequest({ message: e.message }));
     }
   }

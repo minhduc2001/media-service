@@ -70,7 +70,7 @@ class VerifyJWTToken {
       const auth = new VerifyJWTToken();
 
       await auth.verifyToken(req, res, () => {
-        if (req.user.id && req.user.role == "admin") {
+        if (req?.user?.id && req?.user?.role == "admin") {
           return next();
         } else {
           return next(

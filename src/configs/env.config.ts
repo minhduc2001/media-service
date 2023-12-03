@@ -20,6 +20,7 @@ export class Env {
   DB_USERNAME = _process.env.DB_USERNAME;
   DB_HOST = _process.env.DB_HOST;
   DB_PORT = Number(_process.env.DB_PORT) ?? 5432;
+  MONGO_URI = _process.env.MONGO_URI as string;
 
   // jwt
   JWT_SECRET = _process.env.JWT_SECRET as string;

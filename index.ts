@@ -7,6 +7,7 @@ import { envConfig } from "./src/configs/env.config";
 import exceptionFilter from "./src/middlewares/exception.filter";
 import router from "./src/router/router";
 import "./src/utils/response";
+import connectDB from "./src/configs/database.config";
 const app: Express = express();
 const port = envConfig.PORT || 3000;
 
@@ -20,6 +21,7 @@ app.use(helmet());
 app.use(bodyParser.json({ limit: "50mb" }));
 app.use(bodyParser.urlencoded({ limit: "50mb", extended: false }));
 
+await connectDB();
 app.use(morgan("dev"));
 app.use("/api", router);
 app.use(exceptionFilter);

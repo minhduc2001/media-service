@@ -1,11 +1,21 @@
-import path from "path";
+import * as path from "path";
 import { $ } from "zx";
 import slash from "slash";
+import { promisify } from "util";
+import { exec } from "child_process";
+import BadRequest from "../middlewares/exceptions/bad-request";
+import * as fs from "fs";
 
 const MAXIMUM_BITRATE_360P = 1 * 10 ** 6; // 1Mbps
 const MAXIMUM_BITRATE_720P = 5 * 10 ** 6; // 5Mbps
 const MAXIMUM_BITRATE_1080P = 8 * 10 ** 6; // 8Mbps
 const MAXIMUM_BITRATE_1440P = 16 * 10 ** 6; // 16Mbps
+
+const MAXIMUM_BITRATE_128K = 128 * 10 ** 3; // 128 Kbps
+const MAXIMUM_BITRATE_256K = 256 * 10 ** 3; // 256 Kbps
+const MAXIMUM_BITRATE_320K = 320 * 10 ** 3; // 320 Kbps
+
+const execPromise = promisify(exec);
 
 type EncodeByResolution = {
   inputPath: string;
@@ -501,4 +511,99 @@ export const encodeHLSWithMultipleVideoStreams = async (filename: string) => {
     resolution,
   });
   return true;
+};
+
+export const getBitrateAudio = async (filePath: string): Promise<number> => {
+  try {
+    const { stdout } = await execPromise(
+      `ffprobe -v error -select_streams a:0 -show_entries stream=bit_rate -of default=nw=1:nk=1 ${filePath}`
+    );
+    return Number(stdout.trim());
+  } catch (e: any) {
+    throw new BadRequest({ message: e?.message });
+  }
+};
+
+export const encodeHLSWithMultipleAudioStreams = async (
+  filename: string
+): Promise<string> => {
+  try {
+    const inputPath = path.join(process.cwd(), "uploads", filename);
+
+    const bitrate = await getBitrateAudio(inputPath);
+
+    const prefix_folder = inputPath.split("/").at(-1)?.split(".").at(0) || "";
+    const parent_folder = path.join(inputPath, "..");
+
+    const outputSegmentPath = path.join(
+      parent_folder,
+      prefix_folder,
+      "v%v/fileSequence%d.ts"
+    );
+    const outputPath = path.join(
+      parent_folder,
+      prefix_folder,
+      "v%v/prog_index.m3u8"
+    );
+
+    const bitrate128 =
+      bitrate > MAXIMUM_BITRATE_128K ? MAXIMUM_BITRATE_128K : bitrate;
+    const bitrate256 =
+      bitrate > MAXIMUM_BITRATE_256K ? MAXIMUM_BITRATE_256K : bitrate;
+    const bitrate320 =
+      bitrate > MAXIMUM_BITRATE_320K ? MAXIMUM_BITRATE_320K : bitrate;
+
+    let command = `
+      ffmpeg -y -i ${inputPath} \
+      -map 0:0 \
+      -c:a:0 aac -b:a:0 ${bitrate128} \
+      -var_stream_map "a:0" \
+      -master_pl_name master.m3u8 \
+      -f hls -hls_time 6 -hls_list_size 0 \
+      -hls_segment_filename "${slash(outputSegmentPath)}" \
+      ${slash(outputPath)}
+    `;
+
+    if (bitrate > bitrate128) {
+      command = `
+        ffmpeg -y -i ${inputPath} \
+        -map 0:0 -map 0:1 -map 0:0 -map 0:1 \
+        -c:a:0 aac -b:a:0 ${bitrate128} \
+        -c:a:1 aac -b:a:1 ${bitrate256} \
+        -var_stream_map "a:0,a:1" \
+        -master_pl_name master.m3u8 \
+        -f hls -hls_time 6 -hls_list_size 0 \
+        -hls_segment_filename "${outputSegmentPath}" \
+        ${outputPath}
+      `;
+    }
+
+    if (bitrate > bitrate256) {
+      command = `
+        ffmpeg -y -i ${inputPath} \
+        -map 0:0 -map 0:1 -map 0:0 -map 0:1 -map 0:0 -map 0:1 \
+        -c:a:0 aac -b:a:0 ${bitrate128} \
+        -c:a:1 aac -b:a:1 ${bitrate256} \
+        -c:a:2 aac -b:a:2 ${bitrate320} \
+        -var_stream_map "a:0,a:1,a:2" \
+        -master_pl_name master.m3u8 \
+        -f hls -hls_time 6 -hls_list_size 0 \
+        -hls_segment_filename "${outputSegmentPath}" \
+        ${outputPath}
+      `;
+    }
+
+    return new Promise<string>((resolve, reject) => {
+      exec(command, (err, stdout, stderr) => {
+        if (err) {
+          reject(err);
+        } else {
+          console.log("Convert thành công");
+          resolve(outputPath);
+        }
+      });
+    });
+  } catch (e: any) {
+    throw new BadRequest({ message: e?.message });
+  }
 };
