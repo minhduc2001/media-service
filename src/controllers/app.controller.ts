@@ -49,8 +49,9 @@ export class AppController {
 
       res.customSuccess(200, null, "Tải lên thành công");
     } catch (e: any) {
-      removeFile(filename as string);
       return next(new BadRequest({ message: e.message }));
+    } finally {
+      removeFile(filename as string);
     }
   }
 
@@ -108,11 +109,11 @@ export class AppController {
 
       music.isUpdate = true;
       await music.save();
-
       res.customSuccess(200, null, "Tải lên thành công");
     } catch (e: any) {
-      removeFile(filename as string);
       return next(new BadRequest({ message: e.message }));
+    } finally {
+      removeFile(filename as string);
     }
   }
 }
