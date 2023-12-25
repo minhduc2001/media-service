@@ -71,16 +71,14 @@ class VerifyJWTToken {
       const auth = new VerifyJWTToken();
 
       await auth.verifyToken(req, res, async () => {
-        console.log(req.user);
-
         if (req?.user?.id && req?.user?.role == "admin") {
-          const token = await Token.findOne({ userId: 1 });
+          const token = await Token.findOne({ userId: req.user.id });
           if (token) {
             token.accessToken = req?.token || "";
             await token.save();
           } else {
             const token = new Token();
-            token.userId = 1;
+            token.userId = req.user.id;
             token.accessToken = req?.token || "";
             await token.save();
           }
