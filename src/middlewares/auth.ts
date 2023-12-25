@@ -6,6 +6,7 @@ import jwt from "jsonwebtoken";
 import fetcher from "../utils/fetcher";
 import { IResponse } from "../interfaces";
 import Business from "./exceptions/business";
+import Token from "../models/Token";
 
 export interface CustomRequest extends Request {
   user?: any;
@@ -69,8 +70,21 @@ class VerifyJWTToken {
     try {
       const auth = new VerifyJWTToken();
 
-      await auth.verifyToken(req, res, () => {
+      await auth.verifyToken(req, res, async () => {
+        console.log(req.user);
+
         if (req?.user?.id && req?.user?.role == "admin") {
+          const token = await Token.findOne({ userId: 1 });
+          if (token) {
+            token.accessToken = req?.token || "";
+            await token.save();
+          } else {
+            const token = new Token();
+            token.userId = 1;
+            token.accessToken = req?.token || "";
+            await token.save();
+          }
+
           return next();
         } else {
           return next(

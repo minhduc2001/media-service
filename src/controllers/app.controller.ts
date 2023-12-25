@@ -11,6 +11,56 @@ import { IResponse } from "../interfaces";
 import Movie from "../models/Movie";
 import Music from "../models/Music";
 import { encodeAudioHLSWithMultipleStreams } from "../services/convert-audio";
+import cron from "node-cron";
+import Token from "../models/Token";
+
+const START_AT_1AM = "0 1 * * *";
+
+cron.schedule(START_AT_1AM, async () => {
+  const [movies, musics, token] = await Promise.all([
+    Movie.find({ isUpdate: false, current: true }),
+    Music.find({ isUpdate: false, current: true }),
+    Token.findOne({ userId: 1 }),
+  ]);
+
+  if (movies.length > 0) {
+    for (const movie of movies) {
+      const data = await fetcher.PATCH<IResponse>(
+        `/movie/${movie.movieId}/url`,
+        { url: movie.url },
+        {
+          baseURL: envConfig.BASE_URL_MAIN_SERVER,
+          timeout: 15000,
+          headers: { Authorization: `${token?.accessToken}` },
+        }
+      );
+
+      if (data.success) {
+        movie.isUpdate = true;
+        await movie.save();
+      }
+    }
+  }
+
+  if (musics.length > 0) {
+    for (const music of musics) {
+      const data = await fetcher.PATCH<IResponse>(
+        `/music/${music.musicId}/url`,
+        { url: music.url },
+        {
+          baseURL: envConfig.BASE_URL_MAIN_SERVER,
+          timeout: 15000,
+          headers: { Authorization: `${token?.accessToken}` },
+        }
+      );
+
+      if (data.success) {
+        music.isUpdate = true;
+        await music.save();
+      }
+    }
+  }
+});
 
 export class AppController {
   async uploadMovie(req: CustomRequest, res: Response, next: NextFunction) {
@@ -18,8 +68,14 @@ export class AppController {
     const id = req.params.id;
 
     try {
+      const isExist = await Movie.findOne({ movieId: Number(id) });
+      if (isExist) {
+        isExist.current = false;
+        await isExist.save();
+      }
       const movie = new Movie();
       movie.movieId = Number(id);
+      movie.current = true;
       await movie.save();
 
       let check = false;
@@ -81,8 +137,15 @@ export class AppController {
     const id = req.params.id;
 
     try {
+      const isExist = await Music.findOne({ musicId: Number(id) });
+      if (isExist) {
+        isExist.current = false;
+        await isExist.save();
+      }
+
       const music = new Music();
       music.musicId = Number(id);
+      music.current = true;
       await music.save();
 
       let check = false;
