@@ -215,45 +215,45 @@ export const encodeAudioHLSWithMultipleStreams = async (filename: string) => {
     outputSegmentPath,
   });
 
-  if (bitrate > bitrate128) {
-    await encodeAudioMedium({
-      bitrate: {
-        low: bitrate128,
-        medium: bitrate256,
-        high: bitrate320,
-        original: bitrate,
-      },
-      inputPath,
-      outputPath,
-      outputSegmentPath,
-    });
-  }
+  // if (bitrate > bitrate128) {
+  //   await encodeAudioMedium({
+  //     bitrate: {
+  //       low: bitrate128,
+  //       medium: bitrate256,
+  //       high: bitrate320,
+  //       original: bitrate,
+  //     },
+  //     inputPath,
+  //     outputPath,
+  //     outputSegmentPath,
+  //   });
+  // }
 
-  if (bitrate > bitrate256) {
-    await encodeAudioHigh({
-      bitrate: {
-        low: bitrate128,
-        medium: bitrate256,
-        high: bitrate320,
-        original: bitrate,
-      },
-      inputPath,
-      outputPath,
-      outputSegmentPath,
-    });
-  } else {
-    await encodeAudioOriginal({
-      bitrate: {
-        low: bitrate128,
-        medium: bitrate256,
-        high: bitrate320,
-        original: bitrate,
-      },
-      inputPath,
-      outputPath,
-      outputSegmentPath,
-    });
-  }
+  // if (bitrate > bitrate256) {
+  //   await encodeAudioHigh({
+  //     bitrate: {
+  //       low: bitrate128,
+  //       medium: bitrate256,
+  //       high: bitrate320,
+  //       original: bitrate,
+  //     },
+  //     inputPath,
+  //     outputPath,
+  //     outputSegmentPath,
+  //   });
+  // } else {
+  //   await encodeAudioOriginal({
+  //     bitrate: {
+  //       low: bitrate128,
+  //       medium: bitrate256,
+  //       high: bitrate320,
+  //       original: bitrate,
+  //     },
+  //     inputPath,
+  //     outputPath,
+  //     outputSegmentPath,
+  //   });
+  // }
 
   return true;
 };
