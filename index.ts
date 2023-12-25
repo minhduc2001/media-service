@@ -13,13 +13,13 @@ const port = envConfig.PORT || 3000;
 
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: "http://localhost:3000",
   })
 );
-// app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+
 app.use(helmet());
-app.use(bodyParser.json({ limit: "50mb" }));
-app.use(bodyParser.urlencoded({ limit: "50mb", extended: false }));
+app.use(bodyParser.json({ limit: "500mb" }));
+app.use(bodyParser.urlencoded({ limit: "500mb", extended: false }));
 
 await connectDB();
 app.use(morgan("dev"));

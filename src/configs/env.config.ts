@@ -31,7 +31,7 @@ export class Env {
   MAIL_PASSWORD = _process.env.MAIL_PASSWORD;
 
   // file
-  MAX_FILE_SIZE = 10000000; // 10MB;
+  MAX_FILE_SIZE = 500000000; // 10MB;
   UPLOAD_LOCATION = "uploads";
 
   // Momo
